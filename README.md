@@ -18,18 +18,33 @@ Overview of HydroBots' innovative features (e.g., mobile platform, advanced sens
     git clone https://github.com/<your-repo>/HydroBots_repository.git
     ```
 2. Set Up Project Directory:
-Creating a virtual environment.
-Installing necessary dependencies.
-
-3. Set up the Arducam camera
+- Create a virtual environment.
+    ```bash
+    cd robotics
+    ```
+   
+    ```bash
+    python3 -m venv --system-site-packages robotics_env
+    ```
+    Activate virtual environment:
+    ```bash
+    source robotics_env/bin/activate
+    ```
+- Install necessary dependencies.
+   ```bash
+   pip install torch torchvision (not yet complete) get from myboardhub repo
+   ```
+4. Install Ultralytics
+   ```bash
+   pip install ultralytics
+   ```
+5. Set up the Arducam camera
 > For this robot we are using `Arducam IMX708 Camera Module` for Raspberry Pi
 
-4. Install Ultralytics
-
-3. Configuring Hardware:
+6. Configuring Hardware:
 Setting up Raspberry Pi, sensors, and watering mechanisms.
 
-4. Run the Program:
+7. Run the Program:
     ```bash
     python main.py
     ```
