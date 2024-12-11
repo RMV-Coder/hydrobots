@@ -4,8 +4,33 @@ import numpy as np
 from picamera2 import Picamera2
 from torchvision import transforms
 from PIL import Image
-
 from ultralytics import YOLO
+import asyncio
+import websockets
+import json
+import sys
+from aiortc import VideoStreamTrack, RTCPeerConnection, RTCSessionDescription, RTCIceCandidate
+from av import VideoFrame
+import os
+import time
+import pytz
+import jwt
+from datetime import datetime, timedelta, timezone
+import requests
+from pathlib import Path
+import atexit
+import logging
+
+# --- LOGGING CONFIGURATION --- #
+
+
+
+
+
+
+
+
+
 
 # Load the best model weights
 model_path = "YOLOv11/runs/detect/train5/weights/best.pt"  # Path to the best model
@@ -17,6 +42,14 @@ picam2 = Picamera2()
 camera_config = picam2.create_preview_configuration(main={"size": (1280, 720)})
 picam2.configure(camera_config)
 picam2.start()
+def calculate_combined_center_x(pot_x, plant_x, frame_width):
+    # Calculate combined center x
+    combined_center_x = (pot_x + plant_x) / 2
+    # Calculate frame center
+    frame_center_x = frame_width / 2
+    # Determine position relative to frame center
+    position = "right" if combined_center_x > frame_center_x else "left" if combined_center_x < frame_center_x else "center"
+    return combined_center_x, position
 
 def detect_objects(frame):
     # Convert frame from BGR (OpenCV) to RGB
@@ -61,6 +94,8 @@ def detect_objects(frame):
         print("Detected potted plant!")
         picam2.stop()
         print("Camera stopped.")
+        combined_center_x, position = calculate_combined_center_x(pot_x, plant_x, frame_width)
+        print(f"Combined Center X: {combined_center_x:.2f}, Position Relative to Frame Center: {position}")
         exit()
 
 try:
