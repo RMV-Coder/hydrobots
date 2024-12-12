@@ -102,12 +102,14 @@ line.request(consumer="water_sensor", type=gpiod.LINE_REQ_DIR_IN)
 model_path = "YOLOv11/runs/detect/train5/weights/best.pt"  # Path to the best model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = YOLO(model_path)
-
+frame_width = 1280
+frame_height = 720
 # Initialize Picamera2
 picam2 = Picamera2()
-camera_config = picam2.create_preview_configuration(main={"size": (1280, 720)})
+camera_config = picam2.create_preview_configuration(main={"size": (frame_width, frame_height)})
 picam2.configure(camera_config)
 picam2.start()
+
 def calculate_combined_center_x(pot_x, plant_x, frame_width):
     # Calculate combined center x
     combined_center_x = (pot_x + plant_x) / 2
@@ -162,6 +164,9 @@ def detect_objects(frame):
         print("Camera stopped.")
         combined_center_x, position = calculate_combined_center_x(pot_x, plant_x, frame_width)
         print(f"Combined Center X: {combined_center_x:.2f}, Position Relative to Frame Center: {position}")
+        distance = detect_distance()
+        if distance >= 100:
+            
         if position == "right":
             right(0.3)
         elif position == "left":
@@ -200,6 +205,7 @@ def detect_distance():
         # Print the distances
         print(f"Sensor 1: {distance1:.2f} cm")
         print("-" * 30)
+        return distance1
         # while True:
             # Read distances from each sensor
             # distance1 = sensor1.distance * 100  # Convert to cm
@@ -212,8 +218,33 @@ def detect_distance():
 
     except KeyboardInterrupt:
         print("Measurement stopped by User")
+async def set_value(pin, value):
+    pin.value = value
 
-def forward(speed=0.2):
+async def forward_(speed=0.2):
+    await stop()
+    # Set motor speed using PWM
+    await asyncio.gather(
+        set_value(ENA, speed),
+        set_value(ENB, speed),
+        set_value(ENC, speed),
+        set_value(END, speed)
+    )
+
+    # Motors A & B forward
+    IN1.off()
+    IN2.on()
+    IN3.on()
+    IN4.off()
+
+    # Motors C & D forward
+    IN5.off()
+    IN6.on()
+    IN7.off()
+    IN8.on()
+
+async def forward(speed=0.2):
+    await stop()
     # Set motor speed using PWM
     ENA.value = speed+0.1
     ENB.value = speed+0.1
@@ -236,7 +267,7 @@ def forward(speed=0.2):
     IN8.on()
 
 # Function to move all motors backward
-def backward(speed=0.2):
+async def backward(speed=0.2):
     # Set motor speed using PWM
     ENA.value = speed+0.1
     ENB.value = speed+0.1
@@ -258,7 +289,7 @@ def backward(speed=0.2):
     IN7.on()
     IN8.off()
 
-def right(speed=0.2):
+async def right(speed=0.2):
     # Set motor speed using PWM
     ENA.value = speed
     ENB.value = speed
@@ -277,7 +308,7 @@ def right(speed=0.2):
     IN7.off()
     IN8.on()
 
-def left(speed=0.2):
+async def left(speed=0.2, time = 1):
     # Set motor speed using PWM
     ENA.value = speed
     ENB.value = speed
@@ -376,7 +407,7 @@ def left(speed=0.2):
 #     in7_line.set_value(1)
 #     in8_line.set_value(0)
 
-def rotate_ccw(speed=0.15): #rotate towards left
+async def rotate_ccw(speed=0.15): #rotate towards left
     ENA.value = speed
     ENB.value = speed
     ENC.value = speed
@@ -402,6 +433,16 @@ def stop_all():
     ENB.off()
     ENC.off()
     END.off()
+    IN1.off()
+    IN2.off()
+    IN3.off()
+    IN4.off()
+    IN5.off()
+    IN6.off()
+    IN7.off()
+    IN8.off()
+
+async def stop():
     IN1.off()
     IN2.off()
     IN3.off()
